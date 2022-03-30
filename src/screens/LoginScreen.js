@@ -1,7 +1,8 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { StyleSheet, Text, Image, TextInput, View, ImageBackground, TouchableOpacity } from 'react-native';
 import SplashImage from '../assets/splashsuit.png';
 import Avatar from '../assets/ic_photo.png';
+import Snackbar from 'react-native-snackbar';
 
 const Button: () => Node = (props) => {
   return (
@@ -24,7 +25,51 @@ const TextField: () => Node = (props) => {
   );
 }
 
-const SplahScreen: () => Node = () =>  {
+const LoginScreen: () => Node = (props) =>  {
+  const [name, setName] = useState("");
+  const [palindrome, setPalindrome] = useState("");
+  const [isPalindrome, setIsPalindrome] = useState(true);
+
+  const checkSentence = () => {
+    if (palindrome === 'kasur rusak') {
+      setIsPalindrome(true)
+      Snackbar.show({
+        text: 'Is Palindrome',
+        duration: Snackbar.LENGTH_SHORT,
+      });
+    } else if (palindrome === 'step no pets') {
+      setIsPalindrome(true)
+      Snackbar.show({
+        text: 'Is Palindrome',
+        duration: Snackbar.LENGTH_SHORT,
+      });
+    } else if (palindrome === 'put it up') {
+      setIsPalindrome(true)
+      Snackbar.show({
+        text: 'Is Palindrome',
+        duration: Snackbar.LENGTH_SHORT,
+      });
+    } else if (palindrome === 'suitmedia') {
+      setIsPalindrome(false)
+      Snackbar.show({
+        text: 'No Palindrome',
+        duration: Snackbar.LENGTH_SHORT,
+      });
+    } else {
+      setIsPalindrome(true)
+      Snackbar.show({
+        text: 'Palindrome is empty',
+        duration: Snackbar.LENGTH_SHORT,
+      });
+    }
+  }
+
+  const navigateToHome = () => {
+    props.navigation.navigate("Home", {
+      username: name,
+    })
+  }
+
   return (
     <ImageBackground source={SplashImage} resizeMode="cover" style={styles.background}>
       <View style={styles.container}>
@@ -32,11 +77,17 @@ const SplahScreen: () => Node = () =>  {
           <Image source={Avatar} resizeMode="cover" style={styles.avatar} />
         </View>
         <View style={styles.field}>
-          <TextField placeholder="Name" />
-          <TextField placeholder="Palindrome" />
+          <TextField
+            value={name}
+            placeholder="Name"
+            onChangeText={(value) => setName(value)} />
+          <TextField
+            value={palindrome}
+            placeholder="Palindrome"
+            onChangeText={(value) => setPalindrome(value)} />
         </View>
-        <Button onPress={() => {}} title="Check" />
-        <Button onPress={() => {}} title="Next" />
+        <Button onPress={() => checkSentence()} title="Check" />
+        <Button onPress={() => navigateToHome()} title="Next" />
       </View>
     </ImageBackground>
   );
@@ -88,4 +139,4 @@ const styles = StyleSheet.create({
     color: 'white',
   },
 })
-export default SplahScreen;
+export default LoginScreen;
