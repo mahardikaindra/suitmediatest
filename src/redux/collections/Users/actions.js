@@ -17,6 +17,7 @@ export function fetchingDataUser(page) {
       return fetch(`https://reqres.in/api/users?page=${page}&amp;per_page=10`)
         .then((response) => response.json())
         .then((json) => {
+          json.data.map((val) => Object.assign(val, {latitude: 51.73256540025445, longitude: -1.3358092771716716}))
           if (page > 1) {
             dispatch(setDataMoreUser(json))
             resolve(true)
