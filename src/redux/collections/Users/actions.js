@@ -43,3 +43,15 @@ export function setDataMoreUsers(user) {
     return dispatch(setDataMoreUser(user));
   };
 }
+
+
+const setDataSelectedUser = (data) => ({
+  type: types.SET_DATA_SELECTED_USERS,
+  payload: data,
+});
+
+export function selectedUser(data) {
+  return dispatch => {
+    return dispatch(setDataSelectedUser(data));
+  };
+}

@@ -27,3 +27,12 @@ export const dataUsers = createReducer(initialState, {
     },
   }
 );
+
+export const dataUserSelected = createReducer({}, {
+    [types.SET_DATA_SELECTED_USERS](state, action) {
+      return {
+        data: action.payload,
+      };
+    },
+  }
+);

@@ -40,7 +40,7 @@ const App: () => Node = () =>  {
     <Provider store={store}>
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="User"
+          initialRouteName="Login"
           screenOptions={({ route, navigation }) => ({
             headerShown: false,
             gestureEnabled: true,

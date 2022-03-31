@@ -77,13 +77,18 @@ const UserScreen: () => Node = (props) =>  {
 
   const renderContent = ({item}) => {
     return (
-      <View style={styles.contentContainer}>
-        <Image source={{uri: `${item.avatar}`}} resizeMode="contain" style={styles.avatar}/>
-        <View>
-          <Text style={styles.username}>{item.first_name} {item.last_name}</Text>
-          <Text style={styles.email}>{item.email}</Text>
+      <TouchableOpacity onPress={async () => {
+          await props.selectedUser(item)
+          await props.navigation.goBack()
+        }}>
+        <View style={styles.contentContainer}>
+          <Image source={{uri: `${item.avatar}`}} resizeMode="contain" style={styles.avatar}/>
+          <View>
+            <Text style={styles.username}>{item.first_name} {item.last_name}</Text>
+            <Text style={styles.email}>{item.email}</Text>
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   }
 
