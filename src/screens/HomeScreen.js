@@ -1,8 +1,11 @@
 import React, {useState, useEffect} from 'react';
-import { StyleSheet, Text, Image, TextInput, View,  TouchableOpacity } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, Image, TextInput, View,  TouchableOpacity } from 'react-native';
 import Avatar from '../assets/avatar.png';
 import Back from '../assets/back.png';
 import Snackbar from 'react-native-snackbar';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ActionCreators } from '../redux/actions';
 
 const Navbar: () => Node = (props) =>  {
   return (
@@ -30,29 +33,38 @@ const Button: () => Node = (props) => {
 
 const HomeScreen: () => Node = (props) =>  {
   const [avatar, setAvatar] = useState("tasd");
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    if (props.dataSession) {
+      setUsername(props.dataSession.data)
+    }
+  }, [props.dataSession])
 
   const navigateToScreen = (route) => {
     props.navigation.navigate(route);
   }
 
   return (
-    <View style={styles.container}>
-      <Navbar title="Home" goBack={() => props.navigation.goBack()} />
-      <View style={styles.welcomeContainer}>
-        <Text style={styles.welcome}>{"Welcome"}</Text>
-        <Text style={styles.username}>{props.route.params?.username??"Raka"}</Text>
-      </View>
-      <View style={styles.avatarContainer}>
-        <Image source={Avatar} resizeMode="cover" style={styles.avatar} />
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>{"Select a user to show the profile"}</Text>
-          {avatar && <Text style={styles.link} onPress={() => navigateToScreen("Web")}>{"website"}</Text>}
+    <SafeAreaView style={styles.safeAreaView}>
+      <View style={styles.container}>
+        <Navbar title="Home" goBack={() => props.navigation.goBack()} />
+        <View style={styles.welcomeContainer}>
+          <Text style={styles.welcome}>{"Welcome"}</Text>
+          <Text style={styles.username}>{username}</Text>
+        </View>
+        <View style={styles.avatarContainer}>
+          <Image source={Avatar} resizeMode="cover" style={styles.avatar} />
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{"Select a user to show the profile"}</Text>
+            {avatar && <Text style={styles.link} onPress={() => navigateToScreen("Web")}>{"website"}</Text>}
+          </View>
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button onPress={() => navigateToScreen("User")} title="Choose a User" />
         </View>
       </View>
-      <View style={styles.buttonContainer}>
-        <Button onPress={() => navigateToScreen("User")} title="Choose a User" />
-      </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -137,6 +149,18 @@ const styles = StyleSheet.create({
     flex: 0.3,
     padding: 18,
     alignItems: 'flex-start',
-  }
+  },
+  safeAreaView: {
+    flex: 1,
+  },
 })
-export default HomeScreen;
+
+const mapStateToProps = (state) => ({
+  dataSession: state.dataSession,
+});
+
+const mapDispatchToProps = (dispatch) => {
+  return bindActionCreators(ActionCreators, dispatch);
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(HomeScreen);

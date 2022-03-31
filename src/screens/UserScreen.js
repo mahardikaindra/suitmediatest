@@ -1,8 +1,11 @@
 import React, {useState, useEffect} from 'react';
-import { ActivityIndicator, StyleSheet, Text, Image, FlatList, View,  TouchableOpacity } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, Image, FlatList, View, SafeAreaView, TouchableOpacity } from 'react-native';
 import Back from '../assets/back.png';
 import Maps from '../assets/map.png';
 import Snackbar from 'react-native-snackbar';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ActionCreators } from '../redux/actions';
 
 const Navbar: () => Node = (props) =>  {
   return (
@@ -27,62 +30,39 @@ const UserScreen: () => Node = (props) =>  {
   const [isLoading, setLoading] = useState(false);
   const [isRefreshing, setRefresh] = useState(false);
   const [page, setPage] = useState(1);
+  const [totalPage, setTotalPage] = useState(1);
 
   useEffect(() => {
     getUsersFromApiAsync(page);
   }, []);
 
-  const getUsersFromApiAsync = (page) => {
-    setLoading(true);
-    return fetch(`https://reqres.in/api/users?page=${page}&amp;per_page=10`)
-     .then((response) => response.json())
-     .then((json) => {
-       if (page <= json.total_pages) {
-         if (page > 1) {
-           setPage(json.page)
-           setDataSource([...dataSource, ...json.data]);
-           setLoading(false);
-         } else {
-           setPage(json.page)
-           setDataSource(json.data);
-           setLoading(false);
-         }
-       } else {
-         Snackbar.show({
-           text: 'Failed fetching data',
-           duration: Snackbar.LENGTH_SHORT,
-         });
-         setDataSource([]);
-         setLoading(false);
-       }
-     })
-     .catch((error) => {
-       console.error(error);
-       Snackbar.show({
-         text: 'Failed fetching data',
-         duration: Snackbar.LENGTH_SHORT,
-       });
-       setDataSource([]);
-       setLoading(false);
-     });
-  };
-  const refreshUsersFromApiAsync = () => {
-    setRefresh(true);
-    return fetch('https://reqres.in/api/users?page=1&amp;per_page=10')
-     .then((response) => response.json())
-     .then((json) => {
-       setDataSource(json.data);
-       setRefresh(false);
-     })
-     .catch((error) => {
-       console.error(error);
-       Snackbar.show({
-         text: 'Failed fetching data',
-         duration: Snackbar.LENGTH_SHORT,
-       });
-       setDataSource([]);
-       setRefresh(false);
-     });
+  useEffect(() => {
+    if (props.dataUsers.page) {
+      setPage(props.dataUsers.page);
+      setTotalPage(props.dataUsers.total_pages);
+    }
+  }, [props.dataUsers.page]);
+
+  const getUsersFromApiAsync = async (page) => {
+    await setLoading(true);
+    try {
+      const result = await props.fetchingDataUser(page);
+      await setLoading(false);
+      if (!result) {
+        Snackbar.show({
+          text: 'Failed fetching data',
+          duration: Snackbar.LENGTH_SHORT,
+        });
+      }
+    } catch (e) {
+      await setLoading(false);
+      Snackbar.show({
+        text: 'Failed fetching data',
+        duration: Snackbar.LENGTH_SHORT,
+      });
+    } finally {
+      await setLoading(false);
+    }
   };
 
   const navigateToHome = () => {
@@ -102,28 +82,44 @@ const UserScreen: () => Node = (props) =>  {
   }
 
   return (
-    <View style={styles.container}>
-      <Navbar title="Users" goBack={() => props.navigation.goBack()} />
-      <View style={styles.list}>
-        {
-          isLoading ? <ActivityIndicator /> : (
-            <FlatList
-              data={dataSource}
-              renderItem={renderContent}
-              ItemSeparatorComponent={() => (<View style={styles.separator}/> )}
-              ListFooterComponent={() => (<ActivityIndicator style={styles.activityIndicator}/> )}
-              showsVerticalScrollIndicator={false}
-              onRefresh={() => refreshUsersFromApiAsync()}
-              refreshing={isRefreshing}
-              onEndReachedThreshold={0.8}
-              onEndReached={() => setTimeout(() => {
-                getUsersFromApiAsync(2)
-              }, 2000)}
-            />
-          )
-        }
+    <SafeAreaView style={styles.safeAreaView}>
+      <View style={styles.container}>
+        <Navbar title="Users" goBack={() => props.navigation.goBack()} />
+        <View style={styles.list}>
+          {
+            isLoading ? <ActivityIndicator /> : (
+              <FlatList
+                data={props.dataUsers.data}
+                extraData={props.dataUsers.data}
+                renderItem={renderContent}
+                ItemSeparatorComponent={() => (<View style={styles.separator}/> )}
+                ListFooterComponent={() => {
+                  if (props.dataUsers.data.length < props.dataUsers.total) {
+                    return (
+                      <ActivityIndicator style={styles.activityIndicator}/>
+                    );
+                  }
+                  else {
+                    return null;
+                  }
+                }}
+                showsVerticalScrollIndicator={false}
+                onRefresh={() => getUsersFromApiAsync(page)}
+                refreshing={isRefreshing}
+                onEndReachedThreshold={0.8}
+                onEndReached={() => {
+                  if (props.dataUsers.page < props.dataUsers.total_pages) {
+                    setTimeout(() => {
+                      getUsersFromApiAsync(props.dataUsers.page + 1)
+                    }, 1000)
+                  }
+                }}
+                />
+            )
+          }
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -197,5 +193,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'grey',
   },
+  safeAreaView: {
+    flex: 1,
+  },
 })
-export default UserScreen;
+
+const mapStateToProps = (state) => ({
+  dataUsers: state.dataUsers,
+});
+
+const mapDispatchToProps = (dispatch) => {
+  return bindActionCreators(ActionCreators, dispatch);
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(UserScreen);

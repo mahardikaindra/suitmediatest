@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import { StyleSheet, Text, Image, TextInput, View,  TouchableOpacity } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, Image, TextInput, View,  TouchableOpacity } from 'react-native';
 import Avatar from '../assets/avatar.png';
 import Back from '../assets/back.png';
 import Snackbar from 'react-native-snackbar';
@@ -28,13 +28,15 @@ const WebScreen: () => Node = (props) =>  {
   }
 
   return (
-    <View style={styles.container}>
-      <Navbar title="" goBack={() => props.navigation.goBack()}/>
-      <WebView
-        source={{ uri: 'https://suitmedia.com/' }}
-        style={{ marginTop: 20 }}
-      />
-    </View>
+    <SafeAreaView style={styles.safeAreaView}>
+      <View style={styles.container}>
+        <Navbar title="" goBack={() => props.navigation.goBack()}/>
+        <WebView
+          source={{ uri: 'https://suitmedia.com/' }}
+          style={{ marginTop: 20 }}
+          />
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -91,6 +93,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'grey',
     textAlign: 'center',
+  },
+  safeAreaView: {
+    flex: 1,
   },
   link: {
     fontFamily: 'Poppins-Medium',

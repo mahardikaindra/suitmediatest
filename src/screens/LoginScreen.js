@@ -3,6 +3,9 @@ import { StyleSheet, Text, Image, TextInput, View, ImageBackground, TouchableOpa
 import SplashImage from '../assets/splashsuit.png';
 import Avatar from '../assets/ic_photo.png';
 import Snackbar from 'react-native-snackbar';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ActionCreators } from '../redux/actions';
 
 const Button: () => Node = (props) => {
   return (
@@ -65,6 +68,7 @@ const LoginScreen: () => Node = (props) =>  {
   }
 
   const navigateToHome = () => {
+    props.setUserSession(name)
     props.navigation.navigate("Home", {
       username: name,
     })
@@ -138,5 +142,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'white',
   },
-})
-export default LoginScreen;
+});
+
+const mapDispatchToProps = (dispatch) => {
+  return bindActionCreators(ActionCreators, dispatch);
+};
+
+export default connect(null, mapDispatchToProps)(LoginScreen);
