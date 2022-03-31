@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import { ActivityIndicator, StyleSheet, Text, Image, FlatList, View, SafeAreaView, TouchableOpacity } from 'react-native';
 import Back from '../assets/back.png';
 import Maps from '../assets/map.png';
@@ -7,7 +7,8 @@ import Snackbar from 'react-native-snackbar';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ActionCreators } from '../redux/actions';
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'
+import RBSheet from "react-native-raw-bottom-sheet";
+import _ from 'lodash';
 
 const Navbar: () => Node = (props) =>  {
   const [viewRight, setViewRight] = useState(props.mapView)
@@ -30,6 +31,16 @@ const Navbar: () => Node = (props) =>  {
   );
 }
 
+const Button: () => Node = (props) => {
+  return (
+    <TouchableOpacity onPress={() => props.onPress()}>
+      <View style={styles.button}>
+        <Text style={styles.titleButton}>{props.title}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 const UserScreen: () => Node = (props) =>  {
   const [dataSource, setDataSource] = useState([]);
   const [isLoading, setLoading] = useState(false);
@@ -37,6 +48,7 @@ const UserScreen: () => Node = (props) =>  {
   const [page, setPage] = useState(1);
   const [totalPage, setTotalPage] = useState(1);
   const [mapView, setView] = useState(false);
+  const refRBSheet = useRef();
 
   useEffect(() => {
     getUsersFromApiAsync(page);
@@ -50,6 +62,7 @@ const UserScreen: () => Node = (props) =>  {
   }, [props.dataUsers.page]);
 
   const getUsersFromApiAsync = async (page) => {
+
     await setLoading(true);
     try {
       const result = await props.fetchingDataUser(page);
@@ -92,6 +105,23 @@ const UserScreen: () => Node = (props) =>  {
     );
   }
 
+  const renderContentMap = ({item}) => {
+    return (
+      <TouchableOpacity onPress={async () => {
+          await props.selectedUser(item)
+          await refRBSheet.current.open()
+          // await props.navigation.goBack()
+        }}>
+        <View style={styles.contentContainer}>
+          <View>
+            <Text style={styles.username}>{item.latitude}</Text>
+            <Text style={styles.email}>{item.longitude}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <View style={styles.container}>
@@ -102,15 +132,35 @@ const UserScreen: () => Node = (props) =>  {
         <View style={styles.list}>
           {
             isLoading ? <ActivityIndicator /> : mapView ? (
-              <MapView
-                provider={PROVIDER_GOOGLE}
-                initialRegion={{
-                  latitude: 37.78825,
-                  longitude: -122.4324,
-                  latitudeDelta: 0.0922,
-                  longitudeDelta: 0.0421,
-                }}
-              />
+              <View>
+                <FlatList
+                  data={props.dataUsers.data}
+                  extraData={props.dataUsers.data}
+                  renderItem={renderContentMap}
+                  ItemSeparatorComponent={() => (<View style={styles.separator}/> )}
+                  ListFooterComponent={() => {
+                    if (props.dataUsers.data.length < props.dataUsers.total) {
+                      return (
+                        <ActivityIndicator style={styles.activityIndicator}/>
+                      );
+                    }
+                    else {
+                      return null;
+                    }
+                  }}
+                  showsVerticalScrollIndicator={false}
+                  onRefresh={() => getUsersFromApiAsync(page)}
+                  refreshing={isRefreshing}
+                  onEndReachedThreshold={0.8}
+                  onEndReached={() => {
+                    if (props.dataUsers.page < props.dataUsers.total_pages) {
+                      setTimeout(() => {
+                        getUsersFromApiAsync(props.dataUsers.page + 1)
+                      }, 1000)
+                    }
+                  }}
+                />
+              </View>
             ) : (
               <FlatList
                 data={props.dataUsers.data}
@@ -142,6 +192,34 @@ const UserScreen: () => Node = (props) =>  {
             )
           }
         </View>
+        {
+          !_.isEmpty(props.dataUserSelected) &&
+          <RBSheet
+            ref={refRBSheet}
+            height={300}
+            openDuration={250}
+            customStyles={{
+              container: {
+                padding: 18,
+                justifyContent: 'center',
+                borderTopLeftRadius: 18,
+                borderTopRightRadius: 18,
+              }
+            }}
+          >
+          <View style={styles.contentContainers}>
+            <Image source={{uri: `${props.dataUserSelected.data.avatar}`}} resizeMode="contain" style={styles.avatar}/>
+            <View style={styles.rBSheet}>
+              <Text style={styles.username}>{props.dataUserSelected.data.first_name} {props.dataUserSelected.data.last_name}</Text>
+              <Text style={styles.email}>{props.dataUserSelected.data.email}</Text>
+            </View>
+          </View>
+          <Button onPress={async () => {
+            await refRBSheet.current.close()
+            await props.navigation.goBack()
+            }} title="Select" />
+          </RBSheet>
+        }
       </View>
     </SafeAreaView>
   );
@@ -157,6 +235,14 @@ const styles = StyleSheet.create({
     borderRadius: 50/2,
     overflow: 'hidden',
     marginRight: 20,
+  },
+  button: {
+    backgroundColor: '#2B637B',
+    borderRadius: 12,
+    minHeight: 12*4,
+    marginVertical: 15/2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   back: {
 
@@ -184,6 +270,11 @@ const styles = StyleSheet.create({
     marginVertical: 18/2,
     alignItems: 'center',
   },
+  contentContainers: {
+    marginVertical: 18/2,
+    alignItems: 'center',
+    marginBottom: 18,
+  },
   separator: {
     backgroundColor: '#E2E3E4',
     height: 1,
@@ -196,6 +287,9 @@ const styles = StyleSheet.create({
   email:{
     fontFamily: 'Poppins-Medium',
     color: '#686777',
+  },
+  rBSheet: {
+    alignItems: 'center',
   },
   navbar: {
     backgroundColor: 'white',
@@ -221,10 +315,17 @@ const styles = StyleSheet.create({
   safeAreaView: {
     flex: 1,
   },
+  titleButton: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'white',
+  },
 })
 
 const mapStateToProps = (state) => ({
   dataUsers: state.dataUsers,
+  dataUserSelected: state.dataUserSelected,
 });
 
 const mapDispatchToProps = (dispatch) => {
