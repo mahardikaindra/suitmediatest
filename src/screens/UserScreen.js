@@ -2,23 +2,28 @@ import React, {useState, useEffect} from 'react';
 import { ActivityIndicator, StyleSheet, Text, Image, FlatList, View, SafeAreaView, TouchableOpacity } from 'react-native';
 import Back from '../assets/back.png';
 import Maps from '../assets/map.png';
+import List from '../assets/ic_show_list.png';
 import Snackbar from 'react-native-snackbar';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ActionCreators } from '../redux/actions';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'
 
 const Navbar: () => Node = (props) =>  {
+  const [viewRight, setViewRight] = useState(props.mapView)
+  const rightContent = props.mapView ? List : Maps
+
   return (
     <View style={styles.navbar}>
       <TouchableOpacity onPress={() => props.goBack()}>
         <View style={styles.back}>
-          <Image source={Back} resizeMode="cover" style={styles.icon} />
+          <Image source={Back} resizeMode="cover"  />
         </View>
       </TouchableOpacity>
       <Text style={styles.navbarTitle}>{props.title}</Text>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => props.changeView()}>
         <View style={styles.back}>
-          <Image source={Maps} resizeMode="cover" style={styles.icon} />
+          <Image source={rightContent} resizeMode="contain" style={styles.icon} />
         </View>
       </TouchableOpacity>
     </View>
@@ -31,6 +36,7 @@ const UserScreen: () => Node = (props) =>  {
   const [isRefreshing, setRefresh] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPage, setTotalPage] = useState(1);
+  const [mapView, setView] = useState(false);
 
   useEffect(() => {
     getUsersFromApiAsync(page);
@@ -84,10 +90,23 @@ const UserScreen: () => Node = (props) =>  {
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <View style={styles.container}>
-        <Navbar title="Users" goBack={() => props.navigation.goBack()} />
+        <Navbar title="Users"
+          mapView={mapView}
+          changeView={() => setView(!mapView)}
+          goBack={() => props.navigation.goBack()} />
         <View style={styles.list}>
           {
-            isLoading ? <ActivityIndicator /> : (
+            isLoading ? <ActivityIndicator /> : mapView ? (
+              <MapView
+                provider={PROVIDER_GOOGLE}
+                initialRegion={{
+                  latitude: 37.78825,
+                  longitude: -122.4324,
+                  latitudeDelta: 0.0922,
+                  longitudeDelta: 0.0421,
+                }}
+              />
+            ) : (
               <FlatList
                 data={props.dataUsers.data}
                 extraData={props.dataUsers.data}
@@ -138,7 +157,8 @@ const styles = StyleSheet.create({
 
   },
   icon: {
-
+    height: 20,
+    width: 20,
   },
   list: {
     padding: 18,
